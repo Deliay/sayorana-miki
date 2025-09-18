@@ -83,8 +83,7 @@
     function pad(n) { return n < 10 ? '0' + n : n; }
     function getCNTime() {
       // 当前UTC时间 +8小时
-      const now = new Date();
-      return new Date(now.getTime() + (now.getTimezoneOffset() + -480) * 60000);
+      return new Date();
     }
     function update() {
       const now = getCNTime();
