@@ -16,70 +16,158 @@
       position: relative;
       overflow: hidden;
     }
+
     body.waiting {
       background-image: url(before.webp);
     }
+
     body.ended {
       background-image: url(after.webp);
     }
+
     #overlay {
       position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       pointer-events: none;
       z-index: 1;
-      background: radial-gradient(circle at center, rgba(80,80,80,0.5) 0%, rgba(80,80,80,0.2) 60%, rgba(80,80,80,0) 100%);
+      background: radial-gradient(circle at center, rgba(80, 80, 80, 0.5) 0%, rgba(80, 80, 80, 0.2) 60%, rgba(80, 80, 80, 0) 100%);
     }
+
     #countdown-container {
       position: fixed;
       top: 32px;
       left: 32px;
       transform: none;
       z-index: 2;
-      background: rgba(0,0,0,0.4);
+      background: rgba(0, 0, 0, 0.4);
       border-radius: 16px;
       padding: 20px 32px;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.2);
       text-align: center;
       min-width: 220px;
+      transition: all 0.4s cubic-bezier(.4, 2, .6, 1);
     }
+
     #countdown-text {
       font-size: 2.5rem;
       color: #fff;
       font-family: 'Segoe UI', 'Arial', sans-serif;
       font-weight: bold;
       letter-spacing: 2px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     }
-    body.waiting #countdown-container {
-      border: 2px solid #aaa;
-    }
+
     body.ended #countdown-container {
-      border: 2px solid #e74c3c;
+      top: calc(100% - 3.5em);
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 220px;
+      border: none;
+      opacity: 0.5;
     }
+
+    body.ended #theend {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+      background: url('the-end.webp') center center/cover no-repeat;
+      mix-blend-mode: multiply;
+      opacity: 0.75;
+      transition: opacity 0.4s;
+    }
+
     @media only screen and (orientation: landscape) {
       body {
         background-position-x: 75%;
       }
     }
+
     @media only screen and (orientation: portrait) {
       body {
         background-position-x: 40%;
       }
     }
+
+    #dialog-trigger {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 50vw;
+      height: 100vh;
+      z-index: 10;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0);
+    }
+    #gal-dialog {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 100vw;
+      height: 20vh;
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+      z-index: 20;
+      padding-left: 2rem;
+      font-size: 2rem;
+      font-weight: bold;
+      color: white;
+      text-shadow:
+        -0.5px -0.5px 0 black,
+        /* Top-left shadow */
+        0.5px -0.5px 0 black,
+        /* Top-right shadow */
+        -0.5px 0.5px 0 black,
+        /* Bottom-left shadow */
+        0.5px 0.5px 0 black;
+      /* Bottom-right shadow */
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      text-align: left;
+      display: none;
+      transition: opacity 0.3s;
+    }
+    #water-mark {
+      position: fixed;
+      right: 0;
+      color: rgba(255, 255, 255, 0.35);
+      text-shadow:
+        -0.5px -0.5px 0 rgba(0, 0, 0, 0.15),
+        /* Top-left shadow */
+        0.5px -0.5px 0 rgba(0, 0, 0, 0.15),
+        /* Top-right shadow */
+        -0.5px 0.5px 0 rgba(0, 0, 0, 0.15),
+        /* Bottom-left shadow */
+        0.5px 0.5px 0 rgba(0, 0, 0, 0.15);
+      /* Bottom-right shadow */
+    }
   </style>
 </head>
 
 <body class="waiting">
+  <div id="water-mark">图片提供：放射性巧克力慕斯</a> 画师：没炒熟的板栗</div>
+  <div id="dialog-trigger"></div>
+  <div id="gal-dialog"></div>
   <div id="overlay"></div>
   <div id="countdown-container">
     <span id="countdown-text">剩余00分钟00秒</span>
   </div>
+  <div id="theend" style="display:none"></div>
   <script>
     // 目标时间（中国标准时间 UTC+8）
     // 2025-09-20 23:59:00 UTC+8
     const target = new Date(Date.UTC(2025, 8, 20, 15, 59, 0)); // 8小时差
+    const target2 = new Date(Date.UTC(2025, 8, 19, 6, 26, 50)); // 8小时差
     const body = document.body;
     const text = document.getElementById('countdown-text');
+    const theend = document.getElementById('theend');
     function pad(n) { return n < 10 ? '0' + n : n; }
     function getCNTime() {
       // 当前UTC时间 +8小时
@@ -91,18 +179,57 @@
         const diff = Math.floor((target - now) / 1000);
         const min = pad(Math.floor(diff / 60));
         const sec = pad(diff % 60);
-        text.textContent = `${min}分钟${sec}秒后离开`;
+        text.textContent = `${min}:${sec}`;
         if (body.className !== 'waiting') body.className = 'waiting';
+        theend.style.display = 'none';
       } else {
         const diff = Math.floor((now - target) / 1000);
         const min = pad(Math.floor(diff / 60));
         const sec = pad(diff % 60);
-        text.textContent = `已离开${min}分钟${sec}秒`;
+        text.textContent = `${min}:${sec}`;
         if (body.className !== 'ended') body.className = 'ended';
+        theend.style.display = '';
       }
     }
     setInterval(update, 1000);
     update();
+    // Galgame对话框功能
+    const dialogTrigger = document.getElementById('dialog-trigger');
+    const galDialog = document.getElementById('gal-dialog');
+    const dialogLines = [
+      '要走了哦',
+      '你就不用送我啦',
+      '也是时候再见了',
+      '不要悲伤哦，弥人君',
+      '有缘还是会再见的啦',
+    ];
+    let dialogIndex = 0;
+    let dialogVisible = false;
+    function showDialog() {
+      const now = getCNTime();
+      if (now > target) {
+        return;
+      }
+      galDialog.textContent = dialogLines[dialogIndex];
+      galDialog.style.display = 'block';
+      galDialog.style.opacity = '1';
+      dialogVisible = true;
+      dialogIndex = (dialogIndex + 1) % dialogLines.length;
+    }
+    function hideDialog() {
+      galDialog.style.opacity = '0';
+      setTimeout(() => {
+        galDialog.style.display = 'none';
+      }, 300);
+      dialogVisible = false;
+    }
+    dialogTrigger.addEventListener('click', function () {
+      if (!dialogVisible) {
+        showDialog();
+      } else {
+        hideDialog();
+      }
+    });
   </script>
 </body>
 
