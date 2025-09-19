@@ -160,11 +160,11 @@
     <span id="countdown-text">剩余00分钟00秒</span>
   </div>
   <div id="theend" style="display:none"></div>
+  <audio id="ed-audio" src="https://cdn.mihiru.com/mikitube/media/ED.mp3" preload="auto"></audio>
   <script>
     // 目标时间（中国标准时间 UTC+8）
     // 2025-09-20 23:59:00 UTC+8
     const target = new Date(Date.UTC(2025, 8, 20, 15, 59, 0)); // 8小时差
-    const target2 = new Date(Date.UTC(2025, 8, 19, 6, 26, 50)); // 8小时差
     const body = document.body;
     const text = document.getElementById('countdown-text');
     const theend = document.getElementById('theend');
@@ -173,6 +173,8 @@
       // 当前UTC时间 +8小时
       return new Date();
     }
+    let edPlayed = false;
+    const edAudio = document.getElementById('ed-audio');
     function update() {
       const now = getCNTime();
       if (now < target) {
@@ -182,6 +184,9 @@
         text.textContent = `${min}:${sec}`;
         if (body.className !== 'waiting') body.className = 'waiting';
         theend.style.display = 'none';
+        edPlayed = false;
+        if (!edAudio.paused) edAudio.pause();
+        edAudio.currentTime = 0;
       } else {
         const diff = Math.floor((now - target) / 1000);
         const min = pad(Math.floor(diff / 60));
@@ -189,6 +194,10 @@
         text.textContent = `${min}:${sec}`;
         if (body.className !== 'ended') body.className = 'ended';
         theend.style.display = '';
+        if (!edPlayed) {
+          edAudio.play().then(() => edPlayed = true);
+          
+        }
       }
     }
     setInterval(update, 1000);
@@ -210,6 +219,10 @@
     function showDialog() {
       const now = getCNTime();
       if (now > target) {
+        if (!edPlayed) {
+          edAudio.play();
+          edPlayed = true;
+        }
         return;
       }
       galDialog.textContent = dialogLines[dialogIndex];
